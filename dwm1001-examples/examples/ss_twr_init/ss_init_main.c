@@ -37,8 +37,8 @@
 static uint8 tx_poll_msg[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'W', 'A', 'V', 'E', 0xE0, 0, 0};
 static uint8 rx_resp_msg[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'V', 'E', 'W', 'A', 0xE1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-static uint8 tx_ids[] = {4262, 6572, 8534}; // taken from the last 4 digits of the dwt_get_partid() 
-static uint8 recv_id = 1865;
+static uint32 tx_ids[] = {3442804262, 3442806572, 3439478534}; // taken from the last 4 digits of the dwt_get_partid() 
+static uint32 recv_id = 3439481865;
 /* Length of the common part of the message (up to and including the function code, see NOTE 1 below). */
 #define ALL_MSG_COMMON_LEN 10
 /* Indexes to access some of the fields in the frames defined above. */
@@ -79,6 +79,19 @@ static volatile int rx_count = 0 ; // Successful receive counter
 static unsigned int numDistances = 0;
 static double totalDistance = 0;
 static double totalTof = 0;
+
+typedef struct Id {
+  uint8 upper;
+  uint8 lower;
+} id_t;
+
+id_t get_id(uint32 id){
+  id_t currentId;
+  currentId.upper = (dwt_getpartid() >> 8) & 0xff; 
+  currentId.lower = (dwt_getpartid()) & 0xff;
+
+  return currentId;
+}
 
 /*! ------------------------------------------------------------------------------------------------------------------
 * @fn main()
@@ -226,6 +239,16 @@ void ss_initiator_task_function (void * pvParameter)
   //dwt_setrxtimeout(RESP_RX_TIMEOUT_UUS);
 
   dwt_setleds(DWT_LEDS_ENABLE);
+
+  id_t tagId = get_id(dwt_getpartid());
+  tx_poll_msg[7] = (dwt_getpartid() >> 8) & 0xff; 
+  tx_poll_msg[8] = tagId.lower;
+
+  rx_resp_msg[5] = tagId.upper;
+  rx_resp_msg[6] = tagId.lower;
+
+ 
+  printf("%x\r\n %x - %x%x \r\n", dwt_getpartid(), tx_ids[0], tx_poll_msg[7], tx_poll_msg[8]);
 
   while (true)
   {

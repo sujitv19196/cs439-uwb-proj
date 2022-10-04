@@ -1,4 +1,3 @@
-"Output/nrf52832_xxaa/Obj/ss_twr_init/thumb_crt0.o"
 "Output/nrf52832_xxaa/Obj/ss_twr_init/ses_nrf52_startup.o"
 "Output/nrf52832_xxaa/Obj/ss_twr_init/system_nrf52.o"
 "Output/nrf52832_xxaa/Obj/ss_twr_init/main.o"
@@ -11,6 +10,7 @@
 "Output/nrf52832_xxaa/Obj/ss_twr_init/nrf_drv_spi.o"
 "Output/nrf52832_xxaa/Obj/ss_twr_init/nrf_drv_uart.o"
 "Output/nrf52832_xxaa/Obj/ss_twr_init/nrf_drv_clock.o"
+"Output/nrf52832_xxaa/Obj/ss_twr_init/thumb_crt0.o"
 "Output/nrf52832_xxaa/Obj/ss_twr_init/app_button.o"
 "Output/nrf52832_xxaa/Obj/ss_twr_init/app_error.o"
 "Output/nrf52832_xxaa/Obj/ss_twr_init/app_error_weak.o"
