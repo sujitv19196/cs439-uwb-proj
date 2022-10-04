@@ -110,7 +110,7 @@ id_t get_id(uint32 id){
 
 int ss_resp_run(void)
 {
-
+  printf("recv from %x%x", tx_resp_msg[5], tx_resp_msg[6]);
   /* Activate reception immediately. */
   dwt_rxenable(DWT_START_RX_IMMEDIATE);
 
@@ -270,13 +270,19 @@ void ss_responder_task_function (void * pvParameter)
   id_t tagId = get_id(dwt_getpartid());
   tx_poll_msg[7] = tagId.upper; 
   tx_poll_msg[8] = tagId.lower;
-
   rx_resp_msg[5] = tagId.upper;
   rx_resp_msg[6] = tagId.lower;
 
   while (true)
   {
-    ss_resp_run();
+    for (int i = 0; i < 3; i++) {
+      id_t txId = get_id(tx_ids[i]);
+      tx_poll_msg[5] = txId.upper;
+      tx_poll_msg[6] = txId.lower;
+      rx_resp_msg[7] = txId.upper;
+      rx_resp_msg[8] = txId.lower;
+      ss_resp_run();
+    }
     /* Delay a task for a given number of ticks */
     vTaskDelay(RNG_DELAY_MS);
     /* Tasks must be implemented to never return... */
