@@ -155,6 +155,9 @@ int main(void)
 
   dwt_setrxtimeout(0);    // set to NO receive timeout for this simple example   
 
+  printf("Part ID %zu \r\n", dwt_getpartid()); 
+
+
   //-------------dw1000  ini------end---------------------------	
 
   // IF WE GET HERE THEN THE LEDS WILL BLINK
