@@ -268,7 +268,7 @@ void ss_responder_task_function (void * pvParameter)
   dwt_setleds(DWT_LEDS_ENABLE);
 
   id_t tagId = get_id(dwt_getpartid());
-  tx_poll_msg[7] = (dwt_getpartid() >> 8) & 0xff; 
+  tx_poll_msg[7] = tagId.upper; 
   tx_poll_msg[8] = tagId.lower;
 
   rx_resp_msg[5] = tagId.upper;
