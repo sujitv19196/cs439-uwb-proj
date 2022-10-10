@@ -149,6 +149,16 @@ int main(void)
     while (1) {};
   }
 
+  uint32 part_id = dwt_getpartid();
+  if (part_id == 3442804262) { // tag 0 
+    config.chan = 1; 
+  } else if (part_id == 3442806572) { // tag 1 
+    config.chan = 2;
+  } else if (part_id == 3439478534) { //tag 2 
+    config.chan = 5;
+  }
+  printf("using channel %d\r\n", config.chan); 
+
   // Set SPI to 8MHz clock
   port_set_dw1000_fastrate();
 
@@ -203,7 +213,7 @@ int main(void)
  *    device should have its own antenna delay properly calibrated to get good precision when performing range measurements.
  * 3. This timeout is for complete reception of a frame, i.e. timeout duration must take into account the length of the expected frame. Here the value
  *    is arbitrary but chosen large enough to make sure that there is enough time to receive the complete response frame sent by the responder at the
- *    6.8M data rate used (around 200 µs).
+ *    6.8M data rate used (around 200 s).
  * 4. In a real application, for optimum performance within regulatory limits, it may be necessary to set TX pulse bandwidth and TX power, (using
  *    the dwt_configuretxrf API call) to per device calibrated values saved in the target system or the DW1000 OTP memory.
  * 5. The user is referred to DecaRanging ARM application (distributed with EVK1000 product) for additional practical example of usage, and to the
