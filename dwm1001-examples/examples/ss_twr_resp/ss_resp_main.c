@@ -102,8 +102,8 @@ typedef struct Id {
 
 id_t get_id(uint32 id){
   id_t currentId;
-  currentId.upper = (dwt_getpartid() >> 8) & 0xff; 
-  currentId.lower = (dwt_getpartid()) & 0xff;
+  currentId.upper = (id >> 8) & 0xff; 
+  currentId.lower = id & 0xff;
 
   return currentId;
 }
@@ -276,11 +276,11 @@ void ss_responder_task_function (void * pvParameter)
 
   dwt_setleds(DWT_LEDS_ENABLE);
 
-  id_t tagId = get_id(dwt_getpartid());
-  tx_resp_msg[7] = tagId.upper; 
-  tx_resp_msg[8] = tagId.lower;
-  rx_poll_msg[5] = tagId.upper;
-  rx_poll_msg[6] = tagId.lower;
+  //id_t tagId = get_id(dwt_getpartid());
+  //tx_resp_msg[5] = tagId.upper; 
+  //tx_resp_msg[6] = tagId.lower;
+  //rx_poll_msg[7] = tagId.upper;
+  //rx_poll_msg[8] = tagId.lower;
 
   while (true)
   {

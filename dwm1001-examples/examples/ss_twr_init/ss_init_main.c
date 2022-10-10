@@ -87,8 +87,8 @@ typedef struct Id {
 
 id_t get_id(uint32 id){
   id_t currentId;
-  currentId.upper = (dwt_getpartid() >> 8) & 0xff; 
-  currentId.lower = (dwt_getpartid()) & 0xff;
+  currentId.upper = (id >> 8) & 0xff; 
+  currentId.lower = id & 0xff;
 
   return currentId;
 }
