@@ -110,7 +110,6 @@ id_t get_id(uint32 id){
 
 int ss_resp_run(void)
 {
-  printf("recv from %x%x", tx_resp_msg[5], tx_resp_msg[6]);
   /* Activate reception immediately. */
   dwt_rxenable(DWT_START_RX_IMMEDIATE);
 
@@ -146,14 +145,14 @@ int ss_resp_run(void)
     rx_buffer[ALL_MSG_SN_IDX] = 0;
     for (int i = 0; i < 3; i++) { // goes through possible tag options and breaks when recv from one of the three 
       id_t txId = get_id(tx_ids[i]);
-      tx_poll_msg[5] = txId.upper;
-      tx_poll_msg[6] = txId.lower;
-      rx_resp_msg[7] = txId.upper;
-      rx_resp_msg[8] = txId.lower;
+      tx_resp_msg[5] = txId.upper;
+      tx_resp_msg[6] = txId.lower;
+      rx_poll_msg[7] = txId.upper;
+      rx_poll_msg[8] = txId.lower;
     
       if (memcmp(rx_buffer, rx_poll_msg, ALL_MSG_COMMON_LEN) == 0)
       {
-        printf("recv from tag %d\r\n", i);
+        //printf("Recv from tag %d \r\n", i);
         uint32 resp_tx_time;
         int ret;
 
@@ -278,10 +277,10 @@ void ss_responder_task_function (void * pvParameter)
   dwt_setleds(DWT_LEDS_ENABLE);
 
   id_t tagId = get_id(dwt_getpartid());
-  tx_poll_msg[7] = tagId.upper; 
-  tx_poll_msg[8] = tagId.lower;
-  rx_resp_msg[5] = tagId.upper;
-  rx_resp_msg[6] = tagId.lower;
+  tx_resp_msg[7] = tagId.upper; 
+  tx_resp_msg[8] = tagId.lower;
+  rx_poll_msg[5] = tagId.upper;
+  rx_poll_msg[6] = tagId.lower;
 
   while (true)
   {
