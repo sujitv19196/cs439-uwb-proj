@@ -25,6 +25,8 @@
 #include "deca_device_api.h"
 #include "deca_regs.h"
 #include "port_platform.h"
+#include "deca_param_types.h"
+#include "deca_types.h"
 
 /* Inter-ranging delay period, in milliseconds. See NOTE 1*/
 #define RNG_DELAY_MS 80
@@ -32,6 +34,9 @@
 /* Frames used in the ranging process. See NOTE 2,3 below. */
 static uint8 rx_poll_msg[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'W', 'A', 'V', 'E', 0xE0, 0, 0};
 static uint8 tx_resp_msg[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'V', 'E', 'W', 'A', 0xE1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+
+static uint8 tx_channels[] = {1,2,5};
 
 static uint32 tx_ids[] = {3442804262, 3442806572, 3439478534}; // taken from the last 4 digits of the dwt_get_partid() 
 static uint32 recv_id = 3439481865;
@@ -108,48 +113,83 @@ id_t get_id(uint32 id){
   return currentId;
 }
 
+void set_channel(int tagIndex){
+    int chan = tx_channels[tagIndex];
+
+    //uint8 bw = ((chan == 4) || (chan == 7)) ? 1 : 0 ; // Select wide or narrow band
+
+    //// Configure PLL2/RF PLL block CFG/TUNE (for a given channel)
+    //dwt_write32bitoffsetreg(FS_CTRL_ID, FS_PLLCFG_OFFSET, fs_pll_cfg[chan_idx[chan]]);
+    //dwt_write8bitoffsetreg(FS_CTRL_ID, FS_PLLTUNE_OFFSET, fs_pll_tune[chan_idx[chan]]);
+
+    //// Configure RF RX blocks (for specified channel/bandwidth)
+    //dwt_write8bitoffsetreg(RF_CONF_ID, RF_RXCTRLH_OFFSET, rx_config[bw]);
+
+    //// Configure RF TX blocks (for specified channel and PRF)
+    //// Configure RF TX control
+    //dwt_write32bitoffsetreg(RF_CONF_ID, RF_TXCTRL_OFFSET, tx_config[chan_idx[chan]]);
+ dwt_config_t config = {
+  chan,                /* Channel number. */
+  DWT_PRF_64M,      /* Pulse repetition frequency. */
+  DWT_PLEN_128,     /* Preamble length. Used in TX only. */
+  DWT_PAC8,         /* Preamble acquisition chunk size. Used in RX only. */
+  10,               /* TX preamble code. Used in TX only. */
+  10,               /* RX preamble code. Used in RX only. */
+  0,                /* 0 to use standard SFD, 1 to use non-standard SFD. */
+  DWT_BR_6M8,       /* Data rate. */
+  DWT_PHRMODE_STD,  /* PHY header mode. */
+  (129 + 8 - 8)     /* SFD timeout (preamble length + 1 + SFD length - PAC size). Used in RX only. */
+};
+
+  dwt_configure(&config);
+}
+
 int ss_resp_run(void)
 {
-  /* Activate reception immediately. */
-  dwt_rxenable(DWT_START_RX_IMMEDIATE);
-
-  /* Poll for reception of a frame or error/timeout. See NOTE 5 below. */
-  while (!((status_reg = dwt_read32bitreg(SYS_STATUS_ID)) & (SYS_STATUS_RXFCG | SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR)))
-  {};
-
-    #if 0	  // Include to determine the type of timeout if required.
-    int temp = 0;
-    // (frame wait timeout and preamble detect timeout)
-    if(status_reg & SYS_STATUS_RXRFTO )
-    temp =1;
-    else if(status_reg & SYS_STATUS_RXPTO )
-    temp =2;
-    #endif
-
-  if (status_reg & SYS_STATUS_RXFCG)
-  {
-    uint32 frame_len;
-
-    /* Clear good RX frame event in the DW1000 status register. */
-    dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_RXFCG);
-
-    /* A frame has been received, read it into the local buffer. */
-    frame_len = dwt_read32bitreg(RX_FINFO_ID) & RX_FINFO_RXFL_MASK_1023;
-    if (frame_len <= RX_BUFFER_LEN)
-    {
-      dwt_readrxdata(rx_buffer, frame_len, 0);
-    }
-
-    /* Check that the frame is a poll sent by "SS TWR initiator" example.
-    * As the sequence number field of the frame is not relevant, it is cleared to simplify the validation of the frame. */
-    rx_buffer[ALL_MSG_SN_IDX] = 0;
-    for (int i = 0; i < 3; i++) { // goes through possible tag options and breaks when recv from one of the three 
+  for (int i = 0; i < 3; i++) { // goes through possible tag options and breaks when recv from one of the three 
       id_t txId = get_id(tx_ids[i]);
       tx_resp_msg[5] = txId.upper;
       tx_resp_msg[6] = txId.lower;
       rx_poll_msg[7] = txId.upper;
       rx_poll_msg[8] = txId.lower;
-    
+
+      set_channel(i);
+
+            /* Activate reception immediately. */
+      dwt_rxenable(DWT_START_RX_IMMEDIATE);
+
+    /* Poll for reception of a frame or error/timeout. See NOTE 5 below. */
+    while (!((status_reg = dwt_read32bitreg(SYS_STATUS_ID)) & (SYS_STATUS_RXFCG | SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR)))
+    {};
+
+      #if 0	  // Include to determine the type of timeout if required.
+      int temp = 0;
+      // (frame wait timeout and preamble detect timeout)
+      if(status_reg & SYS_STATUS_RXRFTO )
+      temp =1;
+      else if(status_reg & SYS_STATUS_RXPTO )
+      temp =2;
+      #endif
+
+    if (status_reg & SYS_STATUS_RXFCG)
+    {
+      uint32 frame_len;
+
+      /* Clear good RX frame event in the DW1000 status register. */
+      dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_RXFCG);
+
+      /* A frame has been received, read it into the local buffer. */
+      frame_len = dwt_read32bitreg(RX_FINFO_ID) & RX_FINFO_RXFL_MASK_1023;
+      if (frame_len <= RX_BUFFER_LEN)
+      {
+        dwt_readrxdata(rx_buffer, frame_len, 0);
+      }
+
+      /* Check that the frame is a poll sent by "SS TWR initiator" example.
+      * As the sequence number field of the frame is not relevant, it is cleared to simplify the validation of the frame. */
+      rx_buffer[ALL_MSG_SN_IDX] = 0;
+
+
       if (memcmp(rx_buffer, rx_poll_msg, ALL_MSG_COMMON_LEN) == 0)
       {
         //printf("Recv from tag %d \r\n", i);
@@ -205,17 +245,17 @@ int ss_resp_run(void)
         /* Reset RX to properly reinitialise LDE operation. */
         dwt_rxreset();
         }
-        break; 
       }
     }
-  }
-  else
-  {
-    /* Clear RX error events in the DW1000 status register. */
-    dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_ALL_RX_ERR);
+    else
+    {
+      /* Clear RX error events in the DW1000 status register. */
+      dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_ALL_RX_ERR);
 
-    /* Reset RX to properly reinitialise LDE operation. */
-    dwt_rxreset();
+      /* Reset RX to properly reinitialise LDE operation. */
+      dwt_rxreset();
+    }
+    //break;
   }
 
   return(1);		
