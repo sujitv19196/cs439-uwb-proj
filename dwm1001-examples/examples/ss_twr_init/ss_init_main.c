@@ -33,12 +33,21 @@
 /* Inter-ranging delay period, in milliseconds. */
 #define RNG_DELAY_MS 100
 
+#define X 0 
+#define Y 1
+#define Z 2
+
+#define NUM_TX 3
+
 /* Frames used in the ranging process. See NOTE 1,2 below. */
-static uint8 tx_poll_msg[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'W', 'A', 'V', 'E', 0xE0, 0, 0};
+static uint8 tx_poll_msg[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'W', 'A', 'V', 'E', 0xE0, 0, 0, -1, -1, -1}; // last 3 elements are x,y,z 
 static uint8 rx_resp_msg[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'V', 'E', 'W', 'A', 0xE1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 static uint32 tx_ids[] = {3442804262, 3442806572, 3439478534}; // taken from the last 4 digits of the dwt_get_partid() 
 static uint32 recv_id = 3439481865;
+
+// hardcoded trasmitter position (x,y,z)
+static uint8 tx_pos[3][3] = {{0,0,1}, {3,0,1}, {2,2,2}};
 /* Length of the common part of the message (up to and including the function code, see NOTE 1 below). */
 #define ALL_MSG_COMMON_LEN 10
 /* Indexes to access some of the fields in the frames defined above. */
@@ -91,6 +100,14 @@ id_t get_id(uint32 id){
   currentId.lower = id & 0xff;
 
   return currentId;
+}
+
+int get_idx(uint32 part_id) {
+  for (int i = 0; NUM_TX; i++) {
+    if (tx_ids[i] == part_id) {
+      return i; 
+    }
+  }
 }
 
 /*! ------------------------------------------------------------------------------------------------------------------
@@ -247,6 +264,10 @@ void ss_initiator_task_function (void * pvParameter)
   rx_resp_msg[5] = tagId.upper;
   rx_resp_msg[6] = tagId.lower;
 
+  int tx_idx = get_idx(dwt_getpartid()); 
+  tx_poll_msg[12] = tx_pos[tx_idx][X];
+  tx_poll_msg[13] = tx_pos[tx_idx][Y];
+  tx_poll_msg[14] = tx_pos[tx_idx][Z];
  
   printf("%x\r\n %x - %x%x \r\n", dwt_getpartid(), tx_ids[0], tx_poll_msg[7], tx_poll_msg[8]);
 
