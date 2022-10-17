@@ -23,7 +23,6 @@
   <ProjectSessionItem path="ss_twr_resp;ss_twr_resp"/>
   <ProjectSessionItem path="ss_twr_resp;ss_twr_resp;Application"/>
   <ProjectSessionItem path="ss_twr_resp;ss_twr_resp;Decadriver"/>
-  <ProjectSessionItem path="ss_twr_resp;ss_twr_resp;Freertos"/>
  </Project>
  <Register1>
   <RegisterWindow visibleNodes="CPU/r0;CPU/r1;CPU/r2;CPU/r3;CPU/r4;CPU/r5;CPU/r6;CPU/r7;CPU/r8;CPU/r9;CPU/r10;CPU/r11;CPU/r12;CPU/sp(r13);CPU/lr(r14);CPU/pc(r15);CPU/xpsr;CPU/MSP;CPU/PSP;CPU/PRIMASK;CPU/BASEPRI;CPU/FAULTMASK;CPU/CONTROL;CPU/internal;CPU - Current Context/r0;CPU - Current Context/r1;CPU - Current Context/r2;CPU - Current Context/r3;CPU - Current Context/r4;CPU - Current Context/r5;CPU - Current Context/r6;CPU - Current Context/r7;CPU - Current Context/r8;CPU - Current Context/r9;CPU - Current Context/r10;CPU - Current Context/r11;CPU - Current Context/r12;CPU - Current Context/sp(r13);CPU - Current Context/lr(r14);CPU - Current Context/pc(r15);CPU - Current Context/apsr;VFP (System)/fpscr;VFP (Single)/s0;VFP (Single)/s1;VFP (Single)/s2;VFP (Single)/s3;VFP (Single)/s4;VFP (Single)/s5;VFP (Single)/s6;VFP (Single)/s7;VFP (Single)/s8;VFP (Single)/s9;VFP (Single)/s10;VFP (Single)/s11;VFP (Single)/s12;VFP (Single)/s13;VFP (Single)/s14;VFP (Single)/s15;VFP (Single)/s16;VFP (Single)/s17;VFP (Single)/s18;VFP (Single)/s19;VFP (Single)/s20;VFP (Single)/s21;VFP (Single)/s22;VFP (Single)/s23;VFP (Single)/s24;VFP (Single)/s25;VFP (Single)/s26;VFP (Single)/s27;VFP (Single)/s28;VFP (Single)/s29;VFP (Single)/s30;VFP (Single)/s31;VFP (Double)/d0;VFP (Double)/d1;VFP (Double)/d2;VFP (Double)/d3;VFP (Double)/d4;VFP (Double)/d5;VFP (Double)/d6;VFP (Double)/d7;VFP (Double)/d8;VFP (Double)/d9;VFP (Double)/d10;VFP (Double)/d11;VFP (Double)/d12;VFP (Double)/d13;VFP (Double)/d14;VFP (Double)/d15" binaryNodes="" asciiNodes="" openNodes="CPU;CPU/xpsr;CPU/CONTROL;CPU/internal;CPU - Current Context;CPU - Current Context/apsr;VFP (System);VFP (System)/fpscr;VFP (Single);VFP (Double)" name="ss_twr_resp" decimalNodes="" octalNodes="" unsignedNodes=""/>
@@ -56,10 +55,11 @@
   <Watches active="0" update="Never"/>
  </Watch4>
  <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="20" y="180" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../main.c" selected="0" top="27" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="35" y="338" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../deca_driver/deca_device.c" selected="1" top="341" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="10" y="157" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../main.c" selected="0" top="147" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="19" y="369" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../deca_driver/deca_device.c" selected="0" top="453" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../deca_driver/deca_params_init.c" selected="0" top="141" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../deca_driver/port/port_platform.c" selected="0" top="42" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="42" y="30" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../ss_resp_main.c" selected="1" top="9" codecName="Default"/>
  </Files>
  <ARMCrossStudioWindow activeProject="ss_twr_resp" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="nrf52832_xxaa" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="C:/WorkArea/Repositories/dwm1001-keil-examples/nRF5_SDK_14.2.0/components/toolchain/ses" debugSearchPath="" autoConnectCapabilities="3199"/>
 </session>

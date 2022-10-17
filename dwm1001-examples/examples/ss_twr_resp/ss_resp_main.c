@@ -192,7 +192,7 @@ int ss_resp_run(void)
 
       if (memcmp(rx_buffer, rx_poll_msg, ALL_MSG_COMMON_LEN) == 0)
       {
-        //printf("Recv from tag %d \r\n", i);
+        printf("Recv from tag %d \r\n", i);
         uint32 resp_tx_time;
         int ret;
 
