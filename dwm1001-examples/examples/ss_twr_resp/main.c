@@ -126,6 +126,10 @@ int main(void)
   /* Setup DW1000 IRQ pin */
   nrf_gpio_cfg_input(DW1000_IRQ, NRF_GPIO_PIN_NOPULL); 		//irq
 
+    /*Initialization UART*/
+  boUART_Init ();
+  
+
   /* Reset DW1000 */
   reset_DW1000(); 
 
@@ -155,7 +159,7 @@ int main(void)
 
   dwt_setrxtimeout(0);    // set to NO receive timeout for this simple example   
 
-  //printf("Part ID %zu \r\n", dwt_getpartid()); 
+  printf("Part ID %zu \r\n", dwt_getpartid()); 
 
 
   //-------------dw1000  ini------end---------------------------	
