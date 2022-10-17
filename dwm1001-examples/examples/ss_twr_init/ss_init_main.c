@@ -40,7 +40,7 @@
 #define NUM_TX 3
 
 /* Frames used in the ranging process. See NOTE 1,2 below. */
-static uint8 tx_poll_msg[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'W', 'A', 'V', 'E', 0xE0, 0, 0, -1, -1, -1}; // last 3 elements are x,y,z 
+static uint8 tx_poll_msg[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'W', 'A', 'V', 'E', 0xE0, 0, 0, 0, 0, 0}; // last 3 elements are x,y,z 
 static uint8 rx_resp_msg[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'V', 'E', 'W', 'A', 0xE1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 static uint32 tx_ids[] = {3442804262, 3442806572, 3439478534}; // taken from the last 4 digits of the dwt_get_partid() 
@@ -103,7 +103,7 @@ id_t get_id(uint32 id){
 }
 
 int get_idx(uint32 part_id) {
-  for (int i = 0; NUM_TX; i++) {
+  for (int i = 0; i < NUM_TX; i++) {
     if (tx_ids[i] == part_id) {
       return i; 
     }
