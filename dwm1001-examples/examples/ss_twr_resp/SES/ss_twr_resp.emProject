@@ -102,6 +102,9 @@
     <folder Name="Config">
       <file file_name="../../../nRF5_SDK_14.2.0/external/freertos/config/FreeRTOSConfig.h" />
     </folder>
+    <folder Name="Uart">
+      <file file_name="../UART/UART.c" />
+    </folder>
     <folder Name="::CMSIS" />
     <folder Name="::Device" />
   </project>
