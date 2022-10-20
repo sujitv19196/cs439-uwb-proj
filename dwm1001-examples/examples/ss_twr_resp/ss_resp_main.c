@@ -32,7 +32,7 @@
 #define RNG_DELAY_MS 80
 
 /* Frames used in the ranging process. See NOTE 2,3 below. */
-static uint8 rx_poll_msg[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'W', 'A', 'V', 'E', 0xE0, 0, 0};
+static uint8 rx_poll_msg[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'W', 'A', 'V', 'E', 0xE0, 0, 0, 0, 0, 0};
 static uint8 tx_resp_msg[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'V', 'E', 'W', 'A', 0xE1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 
@@ -90,6 +90,10 @@ typedef unsigned long long uint64;
 static uint64 poll_rx_ts;
 static uint64 resp_tx_ts;
 
+#define X 10 
+#define Y 11
+#define Z 12
+
 /*! ------------------------------------------------------------------------------------------------------------------
 * @fn main()
 *
@@ -144,25 +148,21 @@ void set_channel(int tagIndex){
   dwt_configure(&config);
 }
 
+int tagCounter[] = {0,0,0};
+
+
 int ss_resp_run(void)
 {
-  for (int i = 0; i < 3; i++) { // goes through possible tag options and breaks when recv from one of the three 
-      id_t txId = get_id(tx_ids[i]);
-      tx_resp_msg[5] = txId.upper;
-      tx_resp_msg[6] = txId.lower;
-      rx_poll_msg[7] = txId.upper;
-      rx_poll_msg[8] = txId.lower;
-
-      set_channel(i);
-
-            /* Activate reception immediately. */
+    /* Activate reception immediately. */
       dwt_rxenable(DWT_START_RX_IMMEDIATE);
 
+      //printf("Waiting \r\n");
     /* Poll for reception of a frame or error/timeout. See NOTE 5 below. */
     while (!((status_reg = dwt_read32bitreg(SYS_STATUS_ID)) & (SYS_STATUS_RXFCG | SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR)))
     {};
+    //printf("Finished waiting \r\n");
 
-      #if 0	  // Include to determine the type of timeout if required.
+      #if 1	  // Include to determine the type of timeout if required.
       int temp = 0;
       // (frame wait timeout and preamble detect timeout)
       if(status_reg & SYS_STATUS_RXRFTO )
@@ -170,6 +170,7 @@ int ss_resp_run(void)
       else if(status_reg & SYS_STATUS_RXPTO )
       temp =2;
       #endif
+
 
     if (status_reg & SYS_STATUS_RXFCG)
     {
@@ -185,78 +186,104 @@ int ss_resp_run(void)
         dwt_readrxdata(rx_buffer, frame_len, 0);
       }
 
+      uint8 sequenceNumber = rx_buffer[ALL_MSG_SN_IDX];
+
       /* Check that the frame is a poll sent by "SS TWR initiator" example.
       * As the sequence number field of the frame is not relevant, it is cleared to simplify the validation of the frame. */
       rx_buffer[ALL_MSG_SN_IDX] = 0;
 
+      for (int i = 0; i < 3; i++) { // goes through possible tag options and breaks when recv from one of the three 
+        id_t txId = get_id(tx_ids[i]);
+        tx_resp_msg[5] = txId.upper;
+        tx_resp_msg[6] = txId.lower;
+        rx_poll_msg[7] = txId.upper;
+        rx_poll_msg[8] = txId.lower;
 
-      if (memcmp(rx_buffer, rx_poll_msg, ALL_MSG_COMMON_LEN) == 0)
-      {
-        printf("Recv from tag %d \r\n", i);
-        uint32 resp_tx_time;
-        int ret;
+        //set_channel(i);
 
-        /* Retrieve poll reception timestamp. */
-        poll_rx_ts = get_rx_timestamp_u64();
-
-        /* Compute final message transmission time. See NOTE 7 below. */
-        resp_tx_time = (poll_rx_ts + (POLL_RX_TO_RESP_TX_DLY_UUS * UUS_TO_DWT_TIME)) >> 8;
-        dwt_setdelayedtrxtime(resp_tx_time);
-
-        /* Response TX timestamp is the transmission time we programmed plus the antenna delay. */
-        resp_tx_ts = (((uint64)(resp_tx_time & 0xFFFFFFFEUL)) << 8) + TX_ANT_DLY;
-
-        /* Write all timestamps in the final message. See NOTE 8 below. */
-        resp_msg_set_ts(&tx_resp_msg[RESP_MSG_POLL_RX_TS_IDX], poll_rx_ts);
-        resp_msg_set_ts(&tx_resp_msg[RESP_MSG_RESP_TX_TS_IDX], resp_tx_ts);
-
-        /* Write and send the response message. See NOTE 9 below. */
-        tx_resp_msg[ALL_MSG_SN_IDX] = frame_seq_nb;
-        dwt_writetxdata(sizeof(tx_resp_msg), tx_resp_msg, 0); /* Zero offset in TX buffer. See Note 5 below.*/
-        dwt_writetxfctrl(sizeof(tx_resp_msg), 0, 1); /* Zero offset in TX buffer, ranging. */
-        ret = dwt_starttx(DWT_START_TX_DELAYED);
-
-        //ret = dwt_starttx(DWT_START_TX_IMMEDIATE);
-
-        /* If dwt_starttx() returns an error, abandon this ranging exchange and proceed to the next one. */
-        if (ret == DWT_SUCCESS)
+        if (memcmp(rx_buffer, rx_poll_msg, ALL_MSG_COMMON_LEN) == 0)
         {
-        /* Poll DW1000 until TX frame sent event set. See NOTE 5 below. */
-        while (!(dwt_read32bitreg(SYS_STATUS_ID) & SYS_STATUS_TXFRS))
-        {};
+          ++tagCounter[i];
+          
+          uint32 resp_tx_time;
+          int ret;
 
-        /* Clear TXFRS event. */
-        dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_TXFRS);
+          uint8 tagX = rx_buffer[X];
+          uint8 tagY = rx_buffer[Y];
+          uint8 tagZ = rx_buffer[Z];
 
-        /* Increment frame sequence number after transmission of the poll message (modulo 256). */
-        frame_seq_nb++;
+          printf("0: %d 1: %d 2: %d " , tagCounter[0], tagCounter[1],tagCounter[2]);
+          printf("Recv from tag %d, N:%d, Tag pose: %d %d %d \r\n", i,sequenceNumber, tagX, tagY, tagZ);
+
+          /* Retrieve poll reception timestamp. */
+          poll_rx_ts = get_rx_timestamp_u64();
+
+          /* Compute final message transmission time. See NOTE 7 below. */
+          resp_tx_time = (poll_rx_ts + (POLL_RX_TO_RESP_TX_DLY_UUS * UUS_TO_DWT_TIME)) >> 8;
+          dwt_setdelayedtrxtime(resp_tx_time);
+
+          /* Response TX timestamp is the transmission time we programmed plus the antenna delay. */
+          resp_tx_ts = (((uint64)(resp_tx_time & 0xFFFFFFFEUL)) << 8) + TX_ANT_DLY;
+
+          /* Write all timestamps in the final message. See NOTE 8 below. */
+          resp_msg_set_ts(&tx_resp_msg[RESP_MSG_POLL_RX_TS_IDX], poll_rx_ts);
+          resp_msg_set_ts(&tx_resp_msg[RESP_MSG_RESP_TX_TS_IDX], resp_tx_ts);
+
+          /* Write and send the response message. See NOTE 9 below. */
+          tx_resp_msg[ALL_MSG_SN_IDX] = frame_seq_nb;
+          dwt_writetxdata(sizeof(tx_resp_msg), tx_resp_msg, 0); /* Zero offset in TX buffer. See Note 5 below.*/
+          dwt_writetxfctrl(sizeof(tx_resp_msg), 0, 1); /* Zero offset in TX buffer, ranging. */
+          ret = dwt_starttx(DWT_START_TX_DELAYED);
+
+          //ret = dwt_starttx(DWT_START_TX_IMMEDIATE);
+
+          /* If dwt_starttx() returns an error, abandon this ranging exchange and proceed to the next one. */
+          if (ret == DWT_SUCCESS)
+          {
+          /* Poll DW1000 until TX frame sent event set. See NOTE 5 below. */
+          while (!(dwt_read32bitreg(SYS_STATUS_ID) & SYS_STATUS_TXFRS))
+          {};
+
+          /* Clear TXFRS event. */
+          dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_TXFRS);
+
+          /* Increment frame sequence number after transmission of the poll message (modulo 256). */
+          frame_seq_nb++;
+          }
+          else
+          {
+          /* If we end up in here then we have not succeded in transmitting the packet we sent up.
+          POLL_RX_TO_RESP_TX_DLY_UUS is a critical value for porting to different processors. 
+          For slower platforms where the SPI is at a slower speed or the processor is operating at a lower 
+          frequency (Comparing to STM32F, SPI of 18MHz and Processor internal 72MHz)this value needs to be increased.
+          Knowing the exact time when the responder is going to send its response is vital for time of flight 
+          calculation. The specification of the time of respnse must allow the processor enough time to do its 
+          calculations and put the packet in the Tx buffer. So more time is required for a slower system(processor).
+          */
+
+          /* Reset RX to properly reinitialise LDE operation. */
+          dwt_rxreset();
+          }
+
+          break;
         }
-        else
-        {
-        /* If we end up in here then we have not succeded in transmitting the packet we sent up.
-        POLL_RX_TO_RESP_TX_DLY_UUS is a critical value for porting to different processors. 
-        For slower platforms where the SPI is at a slower speed or the processor is operating at a lower 
-        frequency (Comparing to STM32F, SPI of 18MHz and Processor internal 72MHz)this value needs to be increased.
-        Knowing the exact time when the responder is going to send its response is vital for time of flight 
-        calculation. The specification of the time of respnse must allow the processor enough time to do its 
-        calculations and put the packet in the Tx buffer. So more time is required for a slower system(processor).
-        */
 
-        /* Reset RX to properly reinitialise LDE operation. */
-        dwt_rxreset();
-        }
       }
     }
     else
     {
+      if (temp == 1)
+      printf("Error frame missing error");
+      else if(temp == 2){
+      printf("Error preamble wait error");
+      } 
       /* Clear RX error events in the DW1000 status register. */
       dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_ALL_RX_ERR);
 
       /* Reset RX to properly reinitialise LDE operation. */
       dwt_rxreset();
     }
-    //break;
-  }
+
 
   return(1);		
 }
