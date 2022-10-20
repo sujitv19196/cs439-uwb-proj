@@ -22,6 +22,8 @@
 */
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
+
 #include "FreeRTOS.h"
 #include "task.h"
 #include "deca_device_api.h"
@@ -134,6 +136,14 @@ int ss_init_run(int tag_idx)
 
   /* Start transmission, indicating that a response is expected so that reception is enabled automatically after the frame is sent and the delay
   * set by dwt_setrxaftertxdelay() has elapsed. */
+
+  // sleep here randomly 
+  srand(time(NULL));   // Initialization, should only be called once.
+  int r = (rand() % 10) + 1;
+  if (tag_idx == 1) {
+    r*=2; 
+  }
+  deca_sleep(r);
   dwt_starttx(DWT_START_TX_IMMEDIATE | DWT_RESPONSE_EXPECTED);
   tx_count++;
   printf("Transmission # : %d\r\n",tx_count);

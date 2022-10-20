@@ -157,7 +157,6 @@ int main(void)
   // } else if (part_id == 3439478534) { //tag 2 
   //   config.chan = 5;
   // }
-  config.chan = 5;
   printf("using channel %d\r\n", config.chan); 
 
   // Set SPI to 8MHz clock
