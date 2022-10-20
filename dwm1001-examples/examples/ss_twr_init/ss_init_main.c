@@ -40,7 +40,7 @@
 #define NUM_TX 3
 
 /* Frames used in the ranging process. See NOTE 1,2 below. */
-static uint8 tx_poll_msg[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'W', 'A', 'V', 'E', 0xE0, 0, 0, 0, 0, 0}; // last 3 elements are x,y,z 
+static uint8 tx_poll_msg[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'W', 'A', 'V', 'E', 0xE0, 0, 0, 0, 0, 0}; // pos 10,11,12 are x,y,z 
 static uint8 rx_resp_msg[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'V', 'E', 'W', 'A', 0xE1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 static uint32 tx_ids[] = {3442804262, 3442806572, 3439478534}; // taken from the last 4 digits of the dwt_get_partid() 
@@ -119,7 +119,7 @@ int get_idx(uint32 part_id) {
 *
 * @return none
 */
-int ss_init_run(void)
+int ss_init_run(int tag_idx)
 {
 
 
@@ -205,7 +205,7 @@ int ss_init_run(void)
       float averageDistance = totalDistance / numDistances;
       totalTof += tof;
       float averageTof = totalTof / numDistances;
-      printf("Distance : %f %f %f %d\r\n",distance, averageTof * 1000000000, averageDistance, numDistances);
+      printf("Distance from tx %d : %f %f %f %d\r\n", tag_idx, distance, averageTof * 1000000000, averageDistance, numDistances);
     }
   }
   else
@@ -265,15 +265,15 @@ void ss_initiator_task_function (void * pvParameter)
   rx_resp_msg[6] = tagId.lower;
 
   int tx_idx = get_idx(dwt_getpartid()); 
-  tx_poll_msg[12] = tx_pos[tx_idx][X];
-  tx_poll_msg[13] = tx_pos[tx_idx][Y];
-  tx_poll_msg[14] = tx_pos[tx_idx][Z];
+  tx_poll_msg[10] = tx_pos[tx_idx][X];
+  tx_poll_msg[11] = tx_pos[tx_idx][Y];
+  tx_poll_msg[12] = tx_pos[tx_idx][Z];
  
   printf("%x\r\n %x - %x%x \r\n", dwt_getpartid(), tx_ids[0], tx_poll_msg[7], tx_poll_msg[8]);
 
   while (true)
   {
-    ss_init_run();
+    ss_init_run(tx_idx);
     /* Delay a task for a given number of ticks */
     vTaskDelay(RNG_DELAY_MS);
     /* Tasks must be implemented to never return... */

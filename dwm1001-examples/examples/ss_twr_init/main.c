@@ -149,14 +149,15 @@ int main(void)
     while (1) {};
   }
 
-  uint32 part_id = dwt_getpartid();
-  if (part_id == 3442804262) { // tag 0 
-    config.chan = 1; 
-  } else if (part_id == 3442806572) { // tag 1 
-    config.chan = 2;
-  } else if (part_id == 3439478534) { //tag 2 
-    config.chan = 5;
-  }
+  // uint32 part_id = dwt_getpartid();
+  // if (part_id == 3442804262) { // tag 0 
+  //   config.chan = 1; 
+  // } else if (part_id == 3442806572) { // tag 1 
+  //   config.chan = 2;
+  // } else if (part_id == 3439478534) { //tag 2 
+  //   config.chan = 5;
+  // }
+  config.chan = 5;
   printf("using channel %d\r\n", config.chan); 
 
   // Set SPI to 8MHz clock
