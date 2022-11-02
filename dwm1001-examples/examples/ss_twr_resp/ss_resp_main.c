@@ -20,6 +20,7 @@
 #include "sdk_config.h" 
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 #include "FreeRTOS.h"
 #include "task.h"
 #include "deca_device_api.h"
@@ -117,6 +118,15 @@ id_t get_id(uint32 id){
   return currentId;
 }
 
+double get_rx_power() {
+  // uint8 CIR_PWR = (dwt_read32bitreg(RX_FQUAL_ID) & CIR_MXG_MASK) >> CIR_MXG_SHIFT;
+  uint8 CIR_PWR = dwt_read8bitoffsetreg(RX_FQUAL_ID,   RX_EQUAL_CIR_MXG_SHIFT);
+  double A_64Mhz = 121.74;
+  uint16 RX_PACC = (dwt_read32bitreg(RX_FINFO_ID) & RX_FINFO_RXPACC_MASK) >> RX_FINFO_RXPACC_SHIFT;
+  double r = (10 * log10((CIR_PWR * (pow(2, 17))) / (pow(RX_PACC, 2)))) - A_64Mhz; 
+  return r; 
+}
+
 void set_channel(int tagIndex){
     int chan = tx_channels[tagIndex];
 
@@ -160,7 +170,6 @@ int ss_resp_run(void)
     /* Poll for reception of a frame or error/timeout. See NOTE 5 below. */
     while (!((status_reg = dwt_read32bitreg(SYS_STATUS_ID)) & (SYS_STATUS_RXFCG | SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR)))
     {};
-    //printf("Finished waiting \r\n");
 
       #if 1	  // Include to determine the type of timeout if required.
       int temp = 0;
@@ -213,7 +222,7 @@ int ss_resp_run(void)
           uint8 tagZ = rx_buffer[Z];
 
           printf("0: %d 1: %d 2: %d " , tagCounter[0], tagCounter[1],tagCounter[2]);
-          printf("Recv from tag %d, N:%d, Tag pose: %d %d %d \r\n", i,sequenceNumber, tagX, tagY, tagZ);
+          printf("Recv from tag %d, N:%d, Tag pose: %d %d %d, Recv power = %f \r\n", i,sequenceNumber, tagX, tagY, tagZ, get_rx_power());
 
           /* Retrieve poll reception timestamp. */
           poll_rx_ts = get_rx_timestamp_u64();
