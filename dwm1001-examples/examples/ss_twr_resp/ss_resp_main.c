@@ -221,8 +221,9 @@ int ss_resp_run(void)
           uint8 tagY = rx_buffer[Y];
           uint8 tagZ = rx_buffer[Z];
 
-          printf("0: %d 1: %d 2: %d " , tagCounter[0], tagCounter[1],tagCounter[2]);
-          printf("Recv from tag %d, N:%d, Tag pose: %d %d %d, Recv power = %f \r\n", i,sequenceNumber, tagX, tagY, tagZ, get_rx_power());
+          //printf("0: %d 1: %d 2: %d " , tagCounter[0], tagCounter[1],tagCounter[2]);
+          //printf("Recv from tag %d, N:%d, Tag pose: %d %d %d, Recv power = %f \r\n", i,sequenceNumber, tagX, tagY, tagZ, get_rx_power());
+          printf("%d,%d,%d,%d,%d,%f \r\n", i,sequenceNumber, tagX, tagY, tagZ, get_rx_power());
 
           /* Retrieve poll reception timestamp. */
           poll_rx_ts = get_rx_timestamp_u64();
