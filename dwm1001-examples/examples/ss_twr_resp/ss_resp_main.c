@@ -34,9 +34,10 @@
 
 /* Frames used in the ranging process. See NOTE 2,3 below. */
 static uint8 rx_poll_msg[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'W', 'A', 'V', 'E', 0xE0, 0, 0, 0, 0, 0};
-static uint8 tx_resp_msg[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'V', 'E', 'W', 'A', 0xE1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+static uint8 tx_resp_msg[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'V', 'E', 'W', 'A', 0xE1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0};
 
 
+static uint8 tx_pos[3][3] = {{0,0,1}, {3,0,1}, {2,2,2}};
 static uint8 tx_channels[] = {1,2,5};
 
 static uint32 tx_ids[] = {3442804262, 3442806572, 3439478534}; // taken from the last 4 digits of the dwt_get_partid() 
@@ -55,7 +56,7 @@ static uint8 frame_seq_nb = 0;
 
 /* Buffer to store received response message.
 * Its size is adjusted to longest frame that this example code is supposed to handle. */
-#define RX_BUF_LEN 24
+#define RX_BUF_LEN 15
 static uint8 rx_buffer[RX_BUF_LEN];
 
 /* Hold copy of status register state here for reference so that it can be examined at a debug breakpoint. */
@@ -91,9 +92,11 @@ typedef unsigned long long uint64;
 static uint64 poll_rx_ts;
 static uint64 resp_tx_ts;
 
-#define X 10 
-#define Y 11
-#define Z 12
+#define X 18 
+#define Y 19
+#define Z 20
+
+#define NUM_TX 3
 
 /*! ------------------------------------------------------------------------------------------------------------------
 * @fn main()
@@ -116,6 +119,14 @@ id_t get_id(uint32 id){
   currentId.lower = id & 0xff;
 
   return currentId;
+}
+
+int get_idx(uint32 part_id) {
+  for (int i = 0; i < NUM_TX; i++) {
+    if (tx_ids[i] == part_id) {
+      return i; 
+    }
+  }
 }
 
 double get_rx_power() {
@@ -196,34 +207,25 @@ int ss_resp_run(void)
       }
 
       uint8 sequenceNumber = rx_buffer[ALL_MSG_SN_IDX];
+      printf("Sequence Num %d \r\n" , sequenceNumber);
 
       /* Check that the frame is a poll sent by "SS TWR initiator" example.
       * As the sequence number field of the frame is not relevant, it is cleared to simplify the validation of the frame. */
       rx_buffer[ALL_MSG_SN_IDX] = 0;
 
-      for (int i = 0; i < 3; i++) { // goes through possible tag options and breaks when recv from one of the three 
-        id_t txId = get_id(tx_ids[i]);
-        tx_resp_msg[5] = txId.upper;
-        tx_resp_msg[6] = txId.lower;
-        rx_poll_msg[7] = txId.upper;
-        rx_poll_msg[8] = txId.lower;
-
         //set_channel(i);
 
         if (memcmp(rx_buffer, rx_poll_msg, ALL_MSG_COMMON_LEN) == 0)
         {
-          ++tagCounter[i];
+          printf("Tramission: %d \r\n", frame_seq_nb);
+          //++tagCounter[i];
           
           uint32 resp_tx_time;
           int ret;
 
-          uint8 tagX = rx_buffer[X];
-          uint8 tagY = rx_buffer[Y];
-          uint8 tagZ = rx_buffer[Z];
-
           //printf("0: %d 1: %d 2: %d " , tagCounter[0], tagCounter[1],tagCounter[2]);
           //printf("Recv from tag %d, N:%d, Tag pose: %d %d %d, Recv power = %f \r\n", i,sequenceNumber, tagX, tagY, tagZ, get_rx_power());
-          printf("%d,%d,%d,%d,%d,%f \r\n", i,sequenceNumber, tagX, tagY, tagZ, get_rx_power());
+          //printf("%d,%d,%d,%d,%d,%f \r\n", i,sequenceNumber, tagX, tagY, tagZ, get_rx_power());
 
           /* Retrieve poll reception timestamp. */
           poll_rx_ts = get_rx_timestamp_u64();
@@ -274,10 +276,6 @@ int ss_resp_run(void)
           /* Reset RX to properly reinitialise LDE operation. */
           dwt_rxreset();
           }
-
-          break;
-        }
-
       }
     }
     else
@@ -353,11 +351,24 @@ void ss_responder_task_function (void * pvParameter)
 
   dwt_setleds(DWT_LEDS_ENABLE);
 
-  //id_t tagId = get_id(dwt_getpartid());
-  //tx_resp_msg[5] = tagId.upper; 
-  //tx_resp_msg[6] = tagId.lower;
-  //rx_poll_msg[7] = tagId.upper;
-  //rx_poll_msg[8] = tagId.lower;
+  id_t tagId = get_id(dwt_getpartid());
+  tx_resp_msg[7] = tagId.upper; 
+  tx_resp_msg[8] = tagId.lower;
+
+  rx_poll_msg[5] = tagId.upper;
+  rx_poll_msg[6] = tagId.lower;
+
+  id_t txId = get_id(recv_id);
+  tx_resp_msg[5] = txId.upper;
+  tx_resp_msg[6] = txId.lower;
+
+  rx_poll_msg[7] = txId.upper;
+  rx_poll_msg[8] = txId.lower;
+
+  int tx_idx = get_idx(dwt_getpartid()); 
+  tx_resp_msg[X] = tx_pos[tx_idx][0];
+  tx_resp_msg[Y] = tx_pos[tx_idx][1];
+  tx_resp_msg[Z] = tx_pos[tx_idx][2];
 
   while (true)
   {

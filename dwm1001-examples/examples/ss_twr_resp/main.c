@@ -155,9 +155,11 @@ int main(void)
   dwt_settxantennadelay(TX_ANT_DLY);
 
   /* Set preamble timeout for expected frames.  */
+  //dwt_setpreambledetecttimeout(3);
+  //dwt_setrxtimeout(10);    // set to NO receive timeout for this simple example  
   //dwt_setpreambledetecttimeout(PRE_TIMEOUT);
-
   dwt_setrxtimeout(0);    // set to NO receive timeout for this simple example   
+ 
 
   printf("Part ID %zu \r\n", dwt_getpartid()); 
 
