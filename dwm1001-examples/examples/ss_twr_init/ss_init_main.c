@@ -35,21 +35,20 @@
 /* Inter-ranging delay period, in milliseconds. */
 #define RNG_DELAY_MS 100
 
-#define X 0 
-#define Y 1
-#define Z 2
+#define X 18
+#define Y 19
+#define Z 20
 
 #define NUM_TX 3
 
 /* Frames used in the ranging process. See NOTE 1,2 below. */
-static uint8 tx_poll_msg[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'W', 'A', 'V', 'E', 0xE0, 0, 0, 0, 0, 0}; // pos 10,11,12 are x,y,z 
-static uint8 rx_resp_msg[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'V', 'E', 'W', 'A', 0xE1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-
-static uint32 tx_ids[] = {3442804262, 3442806572, 3439478534}; // taken from the last 4 digits of the dwt_get_partid() 
-static uint32 recv_id = 3439481865;
+static uint8 tx_poll_msg[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'W', 'A', 'V', 'E', 0xE0, 0, 0, 0, 0, 0}; 
+static uint8 rx_resp_msg[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'V', 'E', 'W', 'A', 0xE1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0}; // 18, 19,20 = X,Y,Z 
+static uint32 anchor_ids[] = {3442804262, 3442806572, 3439478534}; // taken from the last 4 digits of the dwt_get_partid() 
+static uint32 tag_id = 3439481865;
 
 // hardcoded trasmitter position (x,y,z)
-static uint8 tx_pos[3][3] = {{0,0,1}, {3,0,1}, {2,2,2}};
+static uint8 archor_pos[3][3] = {{0,0,1}, {3,0,1}, {2,2,2}};
 /* Length of the common part of the message (up to and including the function code, see NOTE 1 below). */
 #define ALL_MSG_COMMON_LEN 10
 /* Indexes to access some of the fields in the frames defined above. */
@@ -62,7 +61,7 @@ static uint8 frame_seq_nb = 0;
 
 /* Buffer to store received response message.
 * Its size is adjusted to longest frame that this example code is supposed to handle. */
-#define RX_BUF_LEN 20
+#define RX_BUF_LEN 23
 static uint8 rx_buffer[RX_BUF_LEN];
 
 /* Hold copy of status register state here for reference so that it can be examined at a debug breakpoint. */
@@ -106,7 +105,7 @@ id_t get_id(uint32 id){
 
 int get_idx(uint32 part_id) {
   for (int i = 0; i < NUM_TX; i++) {
-    if (tx_ids[i] == part_id) {
+    if (anchor_ids[i] == part_id) {
       return i; 
     }
   }
@@ -121,7 +120,7 @@ int get_idx(uint32 part_id) {
 *
 * @return none
 */
-int ss_init_run(int tag_idx)
+int ss_init_run(int i)
 {
 
 
@@ -130,6 +129,7 @@ int ss_init_run(int tag_idx)
 
   /* Write frame data to DW1000 and prepare transmission. See NOTE 3 below. */
   tx_poll_msg[ALL_MSG_SN_IDX] = frame_seq_nb;
+   
   dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_TXFRS);
   dwt_writetxdata(sizeof(tx_poll_msg), tx_poll_msg, 0); /* Zero offset in TX buffer. */
   dwt_writetxfctrl(sizeof(tx_poll_msg), 0, 1); /* Zero offset in TX buffer, ranging. */
@@ -138,15 +138,15 @@ int ss_init_run(int tag_idx)
   * set by dwt_setrxaftertxdelay() has elapsed. */
 
   // sleep here randomly 
-  srand(time(NULL));   // Initialization, should only be called once.
-  int r = (rand() % 10) + 1;
-  if (tag_idx == 1) {
-    r*=2; 
-  }
-  deca_sleep(r);
+  // srand(time(NULL));   // Initialization, should only be called once.
+  // int r = (rand() % 10) + 1;
+  // if (tag_idx == 1) {
+  //   r*=2; 
+  // }
+  // deca_sleep(r);
   dwt_starttx(DWT_START_TX_IMMEDIATE | DWT_RESPONSE_EXPECTED);
   tx_count++;
-  printf("Transmission # : %d\r\n",tx_count);
+  // printf("Transmission # : %d\r\n",tx_count);
 
 
   /* We assume that the transmission is achieved correctly, poll for reception of a frame or error/timeout. See NOTE 4 below. */
@@ -175,7 +175,7 @@ int ss_init_run(int tag_idx)
 
     /* A frame has been received, read it into the local buffer. */
     frame_len = dwt_read32bitreg(RX_FINFO_ID) & RX_FINFO_RXFLEN_MASK;
-   
+  
     if (frame_len <= RX_BUF_LEN)
     {
       dwt_readrxdata(rx_buffer, frame_len, 0);
@@ -215,7 +215,12 @@ int ss_init_run(int tag_idx)
       float averageDistance = totalDistance / numDistances;
       totalTof += tof;
       float averageTof = totalTof / numDistances;
-      printf("Distance from tx %d : %f %f %f %d\r\n", tag_idx, distance, averageTof * 1000000000, averageDistance, numDistances);
+
+      int x = rx_buffer[X];
+      int y = rx_buffer[Y];
+      int z = rx_buffer[Z];
+      // printf("Distance from anchor %d : %f %f %f %d\r\n", i, distance, averageTof * 1000000000, averageDistance, numDistances);
+      printf("%d, %f, %d, %d, %d\r\n", i, distance, x, y, z); 
     }
   }
   else
@@ -273,20 +278,24 @@ void ss_initiator_task_function (void * pvParameter)
 
   rx_resp_msg[5] = tagId.upper;
   rx_resp_msg[6] = tagId.lower;
-
-  int tx_idx = get_idx(dwt_getpartid()); 
-  tx_poll_msg[10] = tx_pos[tx_idx][X];
-  tx_poll_msg[11] = tx_pos[tx_idx][Y];
-  tx_poll_msg[12] = tx_pos[tx_idx][Z];
  
-  printf("%x\r\n %x - %x%x \r\n", dwt_getpartid(), tx_ids[0], tx_poll_msg[7], tx_poll_msg[8]);
-
+  //printf("%x\r\n %x - %x%x \r\n", dwt_getpartid(), anchor_ids[0], tx_poll_msg[7], tx_poll_msg[8]);
+  // int cycle = 0; 
   while (true)
   {
-    ss_init_run(tx_idx);
-    /* Delay a task for a given number of ticks */
-    vTaskDelay(RNG_DELAY_MS);
-    /* Tasks must be implemented to never return... */
+    for (int i = 0; i < 3; i++) { // goes through possible tag options and breaks when recv from one of the three 
+      id_t anchorId = get_id(anchor_ids[i]);
+      tx_poll_msg[5] = anchorId.upper;
+      tx_poll_msg[6] = anchorId.lower;
+      rx_resp_msg[7] = anchorId.upper;
+      rx_resp_msg[8] = anchorId.lower;
+      ss_init_run(i);
+      /* Delay a task for a given number of ticks */
+      vTaskDelay(RNG_DELAY_MS);
+      /* Tasks must be implemented to never return... */
+    }
+    // cycle++; 
+
   }
 }
 /*****************************************************************************************************************************************************
