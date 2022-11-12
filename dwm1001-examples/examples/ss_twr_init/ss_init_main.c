@@ -39,12 +39,12 @@
 #define Y 19
 #define Z 20
 
-#define NUM_TX 3
+#define NUM_TX 4
 
 /* Frames used in the ranging process. See NOTE 1,2 below. */
 static uint8 tx_poll_msg[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'W', 'A', 'V', 'E', 0xE0, 0, 0, 0, 0, 0}; 
 static uint8 rx_resp_msg[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'V', 'E', 'W', 'A', 0xE1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0}; // 18, 19,20 = X,Y,Z 
-static uint32 anchor_ids[] = {3442804262, 3442806572, 3439478534}; // taken from the last 4 digits of the dwt_get_partid() 
+static uint32 anchor_ids[] = {3442804262, 3442806572, 3439478534, 3439477010}; // taken from the last 4 digits of the dwt_get_partid() 
 static uint32 tag_id = 3439481865;
 
 // hardcoded trasmitter position (x,y,z)
@@ -183,11 +183,13 @@ int ss_init_run(int i)
 
     /* Check that the frame is the expected response from the companion "SS TWR responder" example.
     * As the sequence number field of the frame is not relevant, it is cleared to simplify the validation of the frame. */
+    
+    uint8 sequenNumber = rx_buffer[ALL_MSG_SN_IDX];
     rx_buffer[ALL_MSG_SN_IDX] = 0;
     if (memcmp(rx_buffer, rx_resp_msg, ALL_MSG_COMMON_LEN) == 0)
     {	
       rx_count++;
-      printf("Reception # : %d\r\n",rx_count);
+      //printf("Reception # : %d\r\n",rx_count);
       uint32 poll_tx_ts, resp_rx_ts, poll_rx_ts, resp_tx_ts;
       int32 rtd_init, rtd_resp;
       float clockOffsetRatio ;
@@ -220,7 +222,7 @@ int ss_init_run(int i)
       int y = rx_buffer[Y];
       int z = rx_buffer[Z];
       // printf("Distance from anchor %d : %f %f %f %d\r\n", i, distance, averageTof * 1000000000, averageDistance, numDistances);
-      printf("%d, %f, %d, %d, %d\r\n", i, distance, x, y, z); 
+      printf("%d,%d,%d,%d,%d,%f\r\n", i, sequenNumber,x, y, z, distance); 
     }
   }
   else
@@ -283,7 +285,7 @@ void ss_initiator_task_function (void * pvParameter)
   // int cycle = 0; 
   while (true)
   {
-    for (int i = 0; i < 3; i++) { // goes through possible tag options and breaks when recv from one of the three 
+    for (int i = 0; i < NUM_TX; i++) { // goes through possible tag options and breaks when recv from one of the three 
       id_t anchorId = get_id(anchor_ids[i]);
       tx_poll_msg[5] = anchorId.upper;
       tx_poll_msg[6] = anchorId.lower;
