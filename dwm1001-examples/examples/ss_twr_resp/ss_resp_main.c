@@ -36,11 +36,11 @@
 static uint8 rx_poll_msg[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'W', 'A', 'V', 'E', 0xE0, 0, 0, 0, 0, 0};
 static uint8 tx_resp_msg[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'V', 'E', 'W', 'A', 0xE1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0};
 
-
-static uint8 tx_pos[3][3] = {{0,0,1}, {3,0,1}, {2,2,2}};
+#define NUM_TX 4
+static uint8 tx_pos[NUM_TX][3] = {{0,0,0}, {30,0,10}, {20,20,0}, {0, 12, 5}}; // units in decimeters 
 static uint8 tx_channels[] = {1,2,5};
 
-static uint32 tx_ids[] = {3442804262, 3442806572, 3439478534}; // taken from the last 4 digits of the dwt_get_partid() 
+static uint32 tx_ids[] = {3442804262, 3442806572, 3439478534, 3439477010}; // taken from the last 4 digits of the dwt_get_partid() 
 static uint32 recv_id = 3439481865;
 /* Length of the common part of the message (up to and including the function code, see NOTE 3 below). */
 #define ALL_MSG_COMMON_LEN 10
@@ -96,7 +96,6 @@ static uint64 resp_tx_ts;
 #define Y 19
 #define Z 20
 
-#define NUM_TX 3
 
 /*! ------------------------------------------------------------------------------------------------------------------
 * @fn main()
