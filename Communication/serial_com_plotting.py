@@ -9,10 +9,17 @@ from PositionCalcualtionNonLinear import calculate_pos
 
 NORMALIZER = -94.04254097
 
-hl, = plt.plot([], [])
+hl, = plt.plot([], [], marker='.')
 
+# plt.scatter(
+#     [0, 3, 2, 0], [0, 0, 2, 1.2], c='r'
+# )
 plt.scatter(
-    [0, 3, 2, 0], [0, 0, 2, 1.2]
+    [0, 3, 2,
+     # 0
+     ], [0, 0, 2,
+         # 1.2
+         ], c='r'
 )
 
 scale = 10
@@ -21,6 +28,7 @@ scale = 10
 def update_plot(new_x, new_y):
     hl.set_xdata(np.append(hl.get_xdata(), new_x))
     hl.set_ydata(np.append(hl.get_ydata(), new_y))
+    plt.autoscale()
     plt.draw()
     plt.pause(.1)
 
@@ -74,6 +82,8 @@ if __name__ == '__main__':
 
                     tag_id, seq, x, y, z, power = map(float, line.split(","))
 
+                    # print(power * 100)
+
                     tags.add(tag_id)
                     poses.append((x, y, z))
                     powers.append(power * scale)
@@ -81,10 +91,10 @@ if __name__ == '__main__':
                     dataP.append(power)
 
                     if len(tags) >= 3:
-                        P = poses
-                        D = powers
+                        P = poses[-10:]
+                        D = powers[-10:]
 
-                        print(x,y)
+                        print(x, y)
 
                         new_pose = calculate_pos(previous_position, P, D)
                         # poses.clear()

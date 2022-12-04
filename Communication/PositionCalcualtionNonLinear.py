@@ -2,21 +2,23 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import least_squares
 
+NORMALIZER = -94.04254097
+
 
 def error(guess, points, distances):
-    xyz, a = guess[:3], guess[-1]
+    xyz = [*guess, 12]
 
-    return np.linalg.norm(points - xyz, 2, axis=1) - distances * a
+    return np.linalg.norm(points - xyz, 2, axis=1) - distances
 
 
 def calculate_pos(guess, points, powers):
     guess = np.array(guess)
     points = np.array(points)
-    powers = np.array(powers).reshape((-1, 1))
+    powers = np.array(powers).reshape((-1, 1)).flatten()
 
     output = least_squares(error, x0=guess, args=(points, powers))
 
-    return output.x[:3], output.x[-1]
+    return output.x[:3]
 
 
 if __name__ == '__main__':
